@@ -1,0 +1,38 @@
+# CON10TRACERS Backend Requirements
+
+# Core Framework
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+pydantic==2.5.0
+pydantic-settings==2.1.0
+
+# AI/ML
+langgraph==0.0.20
+google-generativeai==0.3.0
+
+# NLP
+spacy==3.7.2
+
+# Graph Database
+networkx==3.2.1
+
+# Document Processing
+pymupdf==1.23.8
+
+# PDF Generation
+reportlab==4.0.7
+
+# Scheduling
+apscheduler==3.10.4
+
+# Database (optional - for production)
+# psycopg2-binary==2.9.9
+# neo4j==5.14.1
+
+# Testing
+pytest==7.4.3
+pytest-asyncio==0.21.1
+httpx==0.25.2
+
+# Utilities
+python-multipart==0.0.6
