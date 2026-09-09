@@ -11,6 +11,7 @@ import logging
 from app.core.config import settings, is_demo_mode
 from data.synthetic.demo_data import load_demo_data
 from app.monitoring.scheduler import monitoring_scheduler
+
 from app.api.routes_health import router as health_router
 from app.api.routes_cases import router as cases_router
 from app.api.routes_documents import router as documents_router
@@ -22,65 +23,115 @@ from app.api.routes_monitoring import router as monitoring_router
 from app.api.routes_reports import router as reports_router
 
 
-# Configure logging
+# =========================================================
+# LOGGING
+# =========================================================
+
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 
 logger = logging.getLogger(__name__)
 
 
+# =========================================================
+# APPLICATION LIFESPAN
+# =========================================================
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Application lifespan manager"""
+    """Application startup and shutdown manager."""
 
-    # Startup
+    # -------------------------
+    # STARTUP
+    # -------------------------
+
     logger.info("Starting CON10TRACERS backend...")
     logger.info(f"Demo mode: {is_demo_mode()}")
 
-    # Load synthetic demo data into the same database
-    # used by the FastAPI application.
+    # Load synthetic demo data
     if is_demo_mode():
-        logger.info("Loading synthetic demo data into the application database...")
-        load_demo_data()
+        logger.info(
+            "Loading synthetic demo data into the application database..."
+        )
 
-    # Start monitoring scheduler if enabled
+        try:
+            load_demo_data()
+            logger.info("Synthetic demo data loaded successfully.")
+        except Exception as exc:
+            logger.exception(
+                f"Failed to load synthetic demo data: {exc}"
+            )
+
+    # Start monitoring scheduler
     if settings.MONITORING_ENABLED:
-        monitoring_scheduler.start()
-        logger.info("Monitoring scheduler started")
+        try:
+            monitoring_scheduler.start()
+            logger.info("Monitoring scheduler started")
+        except Exception as exc:
+            logger.exception(
+                f"Failed to start monitoring scheduler: {exc}"
+            )
 
     yield
 
-    # Shutdown
+    # -------------------------
+    # SHUTDOWN
+    # -------------------------
+
     logger.info("Shutting down CON10TRACERS backend...")
 
-    # Stop monitoring scheduler
     if settings.MONITORING_ENABLED:
-        monitoring_scheduler.stop()
-        logger.info("Monitoring scheduler stopped")
+        try:
+            monitoring_scheduler.stop()
+            logger.info("Monitoring scheduler stopped")
+        except Exception as exc:
+            logger.exception(
+                f"Failed to stop monitoring scheduler: {exc}"
+            )
 
 
-# Create FastAPI application
+# =========================================================
+# FASTAPI APPLICATION
+# =========================================================
+
 app = FastAPI(
     title=settings.APP_NAME,
     version=settings.APP_VERSION,
-    description="Investigator-Assistance and Investigation-Intelligence Platform",
+    description=(
+        "Investigator-Assistance and "
+        "Investigation-Intelligence Platform"
+    ),
     lifespan=lifespan
 )
 
 
-# Configure CORS
+# =========================================================
+# CORS CONFIGURATION
+# =========================================================
+
+# Allow the React/Vite frontend to communicate with FastAPI
+# during local development.
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[settings.FRONTEND_ORIGIN],
+    allow_origins=[
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 
-# Include routers
+# =========================================================
+# API ROUTES
+# =========================================================
+
 app.include_router(
     health_router,
     prefix="/api",
@@ -136,9 +187,13 @@ app.include_router(
 )
 
 
+# =========================================================
+# ROOT ENDPOINT
+# =========================================================
+
 @app.get("/")
 async def root():
-    """Root endpoint"""
+    """Root endpoint."""
 
     return {
         "message": "CON10TRACERS API",
@@ -147,6 +202,10 @@ async def root():
         "demo_mode": is_demo_mode()
     }
 
+
+# =========================================================
+# RUN APPLICATION DIRECTLY
+# =========================================================
 
 if __name__ == "__main__":
     import uvicorn

@@ -1,0 +1,6 @@
+{
+  "name": "CON10TRACERS",
+  "description": "AI-assisted investigation intelligence platform for discovering relationships, patterns, and evidence across complex investigation data.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
