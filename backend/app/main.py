@@ -15,14 +15,46 @@ from app.api.routes_monitoring import router as monitoring_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    try:
-        from app.data.demo_data import load_demo_data
 
-        load_demo_data()
-        print("Demo data loaded successfully")
+    print("========================================")
+    print("CON10TRACERS STARTING")
+    print("========================================")
+
+    try:
+        # Correct location of demo data
+        from data.synthetic.demo_data import load_demo_data
+
+        print("Loading synthetic demo data...")
+
+        demo_data = load_demo_data()
+
+        print("========================================")
+        print("DEMO DATA LOADED SUCCESSFULLY")
+        print(f"Cases: {len(demo_data.get('cases', []))}")
+        print(f"Entities: {len(demo_data.get('entities', []))}")
+        print(
+            f"Relationships: "
+            f"{len(demo_data.get('relationships', []))}"
+        )
+        print(
+            f"Evidence: "
+            f"{len(demo_data.get('evidence', []))}"
+        )
+        print(
+            f"Social Profiles: "
+            f"{len(demo_data.get('social_profiles', []))}"
+        )
+        print(
+            f"Alerts: "
+            f"{len(demo_data.get('alerts', []))}"
+        )
+        print("========================================")
 
     except Exception as e:
-        print(f"Demo data loading skipped: {e}")
+        print("========================================")
+        print("ERROR LOADING DEMO DATA")
+        print(str(e))
+        print("========================================")
 
     yield
 
@@ -35,7 +67,10 @@ app = FastAPI(
 )
 
 
-# Allow frontend connections
+# =========================================================
+# CORS
+# =========================================================
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -51,16 +86,54 @@ app.add_middleware(
 )
 
 
-# API routes
-app.include_router(health_router, prefix="/api")
-app.include_router(cases_router, prefix="/api")
-app.include_router(documents_router, prefix="/api")
-app.include_router(entities_router, prefix="/api")
-app.include_router(graph_router, prefix="/api")
-app.include_router(social_router, prefix="/api")
-app.include_router(agent_router, prefix="/api")
-app.include_router(monitoring_router, prefix="/api")
+# =========================================================
+# API ROUTES
+# =========================================================
 
+app.include_router(
+    health_router,
+    prefix="/api",
+)
+
+app.include_router(
+    cases_router,
+    prefix="/api",
+)
+
+app.include_router(
+    documents_router,
+    prefix="/api",
+)
+
+app.include_router(
+    entities_router,
+    prefix="/api",
+)
+
+app.include_router(
+    graph_router,
+    prefix="/api",
+)
+
+app.include_router(
+    social_router,
+    prefix="/api",
+)
+
+app.include_router(
+    agent_router,
+    prefix="/api",
+)
+
+app.include_router(
+    monitoring_router,
+    prefix="/api",
+)
+
+
+# =========================================================
+# ROOT
+# =========================================================
 
 @app.get("/")
 async def root():
@@ -68,4 +141,5 @@ async def root():
         "name": "CON10TRACERS",
         "status": "running",
         "version": "1.0.0",
+        "demo_mode": True,
     }
